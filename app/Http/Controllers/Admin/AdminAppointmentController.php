@@ -2,64 +2,46 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Models\Appointment;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
 class AdminAppointmentController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        $appointments = Appointment::with(['patient', 'dentist'])->latest()->paginate(10);
+        return view('admin.appointments.index', compact('appointments'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function edit(Appointment $appointment)
     {
-        //
+        return view('admin.appointments.edit', compact('appointment'));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function update(Request $request, Appointment $appointment)
     {
-        //
+        $request->validate([
+            'appointment_time' => 'required|date_format:H:i',
+            'appointment_date' => 'required|date',
+            'status' => 'required|in:pending,confirmed,cancelled',
+            'notes' => 'nullable|string',
+        ]);
+
+        $appointment->update([
+            'status' => $request->status,
+            'notes' => $request->notes,
+            'appointment_date' => $request->appointment_date,
+            'appointment_time' => $request->appointment_time,
+        ]);
+
+        return redirect()->route('admin.appointments.index')->with('success', 'Appointment updated.');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
+    public function destroy(Appointment $appointment)
     {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        $appointment->delete();
+        return back()->with('success', 'Appointment deleted.');
     }
 }
